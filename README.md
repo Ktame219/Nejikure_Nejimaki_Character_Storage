@@ -1,0 +1,1 @@
+# Nejikure_Nejimaki_Character_Storage
