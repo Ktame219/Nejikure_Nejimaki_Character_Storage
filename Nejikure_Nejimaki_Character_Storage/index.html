@@ -203,6 +203,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .gh-bar-info{flex:1;min-width:0;font-size:12px;color:var(--color-text-secondary)}
 .gh-bar-info strong{color:var(--color-text-primary);font-size:13px}
 .gh-avatar{width:24px;height:24px;border-radius:50%;border:0.5px solid var(--color-border-secondary)}
+#gh-account:hover{opacity:.75}
 .gist-share-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:10px 12px;margin-top:10px}
 .gist-url-row{display:flex;gap:6px;align-items:center;margin-top:6px}
 .gist-url-row input{flex:1;font-size:11px;color:var(--color-text-secondary);background:var(--color-background-primary)}
@@ -218,17 +219,23 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
 <div id="lv">
   <div class="topbar">
     <h1><i class="ti ti-user" style="font-size:16px;color:var(--ac)" aria-hidden="true"></i> ネジクレネジマキ キャラ管理</h1>
-    <button class="btn ac" onclick="newChar()"><i class="ti ti-plus" aria-hidden="true"></i> 新規作成</button>
-  </div>
-
-  <!-- GitHubログインバー -->
-  <div class="gh-bar" id="gh-bar">
-    <div class="gh-bar-info" id="gh-bar-info">
-      <span>GitHubでログインするとキャラを友達と共有できます</span>
-    </div>
-    <button class="btn sm" id="gh-login-btn" onclick="ghLogin()">
+    <!-- 非ログイン時：ログインボタン -->
+    <button class="btn sm" id="gh-login-btn" onclick="ghLogin()" style="display:none">
       <i class="ti ti-brand-github" aria-hidden="true"></i> ログイン
     </button>
+    <!-- ログイン時：アカウント表示 -->
+    <div id="gh-account" style="display:none;align-items:center;gap:8px;cursor:pointer" onclick="ghLogout()">
+      <img id="gh-account-avatar" class="gh-avatar" style="width:28px;height:28px">
+      <span id="gh-account-name" style="font-size:13px;color:var(--color-text-primary);font-weight:500"></span>
+      <i class="ti ti-logout" style="font-size:14px;color:var(--color-text-tertiary)" aria-hidden="true"></i>
+    </div>
+  </div>
+
+  <!-- GitHubログイン促進バー（非ログイン時のみ） -->
+  <div class="gh-bar" id="gh-bar" style="display:none">
+    <div class="gh-bar-info">
+      <span>GitHubでログインするとキャラを友達と共有できます</span>
+    </div>
   </div>
 
   <!-- Gist共有URLからのインポートバナー -->
@@ -997,10 +1004,10 @@ function ghLogin(){
 
 // GitHubログアウト
 function ghLogout(){
+  if(!confirm(ghUser?.login+' からログアウトしますか？'))return;
   ghToken=null;ghUser=null;
   localStorage.removeItem('gh_token');
   renderGhBar();
-  document.getElementById('vw-share-btn').style.display='none';
   toast('ログアウトしました');
 }
 
@@ -1051,19 +1058,25 @@ async function fetchGhUser(){
 
 // ログインバーの描画
 function renderGhBar(){
-  const bar=document.getElementById('gh-bar-info');
-  const btn=document.getElementById('gh-login-btn');
-  if(!bar||!btn)return;
+  const loginBtn=document.getElementById('gh-login-btn');
+  const accountEl=document.getElementById('gh-account');
+  const ghBar=document.getElementById('gh-bar');
+  const shareBtn=document.getElementById('vw-share-btn');
+
   if(ghUser){
-    bar.innerHTML=`<img class="gh-avatar" src="${ghUser.avatar_url}"> <strong>${ghUser.login}</strong> でログイン中`;
-    btn.innerHTML='<i class="ti ti-logout" aria-hidden="true"></i> ログアウト';
-    btn.onclick=ghLogout;
-    document.getElementById('vw-share-btn').style.display='';
+    // ログイン時：アカウント表示、ログイン促進バー非表示
+    loginBtn.style.display='none';
+    accountEl.style.display='flex';
+    document.getElementById('gh-account-avatar').src=ghUser.avatar_url;
+    document.getElementById('gh-account-name').textContent=ghUser.login;
+    ghBar.style.display='none';
+    if(shareBtn)shareBtn.style.display='';
   } else {
-    bar.innerHTML='GitHubでログインするとキャラを友達と共有できます';
-    btn.innerHTML='<i class="ti ti-brand-github" aria-hidden="true"></i> ログイン';
-    btn.onclick=ghLogin;
-    document.getElementById('vw-share-btn').style.display='none';
+    // 非ログイン時：ログインボタン表示、ログイン促進バー表示
+    loginBtn.style.display='';
+    accountEl.style.display='none';
+    ghBar.style.display='';
+    if(shareBtn)shareBtn.style.display='none';
   }
 }
 
