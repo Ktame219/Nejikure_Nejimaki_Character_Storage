@@ -1026,7 +1026,7 @@ async function handleOAuthCallback(){
   sessionStorage.removeItem('gh_state');
   toast('ログイン中…',4000);
   try{
-    const res=await fetch('/functions/token',{
+    const res=await fetch('https://nejikure-token.kaitototamenobu.workers.dev',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({code}),
