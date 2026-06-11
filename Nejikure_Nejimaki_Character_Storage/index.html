@@ -313,7 +313,6 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
       <div class="sec-t" style="margin-bottom:8px">階級・クランスキル</div>
       <div class="sk-grid c3" id="clan-skills"></div>
     </div>
-    <div class="row c2" style="margin-top:8px;margin-bottom:0"><div class="fg"><span class="fl">序列</span><input type="text" id="f-order"></div></div>
     </div>
   </div>
 
@@ -684,7 +683,7 @@ function fill(c){
   fv('f-minou',c.minou);fv('f-minou-desc',c.minouDesc);
   fv('f-kikkake',c.kikkake);fv('f-kikkake-desc',c.kikkakeDesc);
   fv('f-negai',c.negai);fv('f-negai-desc',c.negaiDesc);
-  fv('f-order',c.order);fv('f-memo',c.memo);
+  fv('f-memo',c.memo);
   document.getElementById('ko-cb').checked=c.ko||false;
   document.getElementById('kowrap').className='ko-wrap'+(c.ko?' ko':'');
   const ai=document.getElementById('av-img'),ic=document.getElementById('av-ic');
@@ -699,7 +698,25 @@ function fill(c){
 
 function renderHex(el,arr){
   const e=document.getElementById(el);e.innerHTML='';
-  arr.forEach((v,i)=>{const b=document.createElement('button');b.className='hb'+(v?' on':'');b.textContent=i+1;b.onclick=()=>{arr[i]=!arr[i];renderHex(el,arr);};e.appendChild(b);});
+  const onCount=arr.lastIndexOf(true)+1; // 現在何番までONか
+  arr.forEach((v,i)=>{
+    const b=document.createElement('button');
+    b.className='hb'+(i<onCount?' on':'');
+    b.textContent=i+1;
+    b.onclick=()=>{
+      const cur=arr.lastIndexOf(true)+1;
+      if(i+1===cur){
+        // 同じボタンを押したら全部OFF
+        arr.fill(false);
+      } else {
+        // i+1番目まで全部ONにする
+        arr.fill(false);
+        for(let j=0;j<=i;j++)arr[j]=true;
+      }
+      renderHex(el,arr);
+    };
+    e.appendChild(b);
+  });
 }
 function renderClanRadio(sel){
   const el=document.getElementById('clan-radio');el.innerHTML='';
@@ -723,7 +740,7 @@ function renderClanSkills(clan,selRank){
       <div class="sk-name">${s.name}</div>
       <div class="sk-tags"><span class="tag">⏱ ${s.timing}</span><span class="tag ac">${s.limit}</span></div>
       <div class="sk-eff">${s.effect}</div>`;
-    card.querySelector('input').onchange=()=>{chars[cid].rank=s.rank;renderClanSkills(clan,s.rank);};
+    card.querySelector('input').onchange=()=>{chars[cid].rank=s.rank;chars[cid].order=s.order;renderClanSkills(clan,s.rank);};
     el.appendChild(card);
   });
 }
@@ -771,7 +788,7 @@ function onImg(e){
 }
 function collect(){
   const c=chars[cid];
-  ['name','rig','player','gender','age','line','minou','kikkake','negai','order','memo'].forEach(k=>{c[k]=document.getElementById('f-'+k).value;});
+  ['name','rig','player','gender','age','line','minou','kikkake','negai','memo'].forEach(k=>{c[k]=document.getElementById('f-'+k).value;});
   c.minouDesc=document.getElementById('f-minou-desc').value;
   c.kikkakeDesc=document.getElementById('f-kikkake-desc').value;
   c.negaiDesc=document.getElementById('f-negai-desc').value;
