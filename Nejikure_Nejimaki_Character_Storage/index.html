@@ -17,6 +17,7 @@
 <meta name="twitter:image" content="https://raw.githubusercontent.com/Ktame219/Nejikure_Nejimaki_Character_Storage/main/ogp.jpg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="rig_parts.js"></script>
 </head>
 <body>
 
@@ -133,6 +134,24 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .record-kizuna-box .fg{flex:1;min-width:100px}
 .vw-record-meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .vw-record-meta .tag{font-size:11px}
+
+/* リグパーツ */
+.rig-cat-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer}
+.rig-cat-btn.ac{background:var(--ac);color:#fff;border-color:var(--ac)}
+.rig-part-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:9px 12px;margin-bottom:8px;background:var(--color-background-secondary);cursor:pointer;transition:border-color .15s}
+.rig-part-card.selected{border-color:var(--ac);background:var(--acl)}
+.rig-part-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.rig-part-card-head .name{font-size:14px;font-weight:700;color:var(--color-text-primary)}
+.rig-part-card-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.rig-part-card-stats .tag{font-size:10px}
+.rig-part-card-flavor{font-size:11px;color:var(--color-text-tertiary);line-height:1.5}
+.rig-selected-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px;font-size:13px;background:var(--color-background-secondary)}
+.rig-selected-item .name{font-weight:500;color:var(--color-text-primary)}
+.vw-rig-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:10px 12px;margin-bottom:8px;background:var(--color-background-secondary)}
+.vw-rig-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.vw-rig-card-head .name{font-size:14px;font-weight:700;color:var(--color-text-primary)}
+.vw-rig-card-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.vw-rig-card-effects{font-size:12px;color:var(--color-text-secondary);line-height:1.7}
 .kiz-t input:checked+label{background:var(--ac);color:#fff;border-color:var(--ac)}
 .kiz-t input.teki:checked+label{background:#D85A30;border-color:#D85A30}
 .del-btn{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--color-text-tertiary);cursor:pointer;font-size:13px}
@@ -385,6 +404,19 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
     </div>
   </div>
 
+  <div class="sec" id="sec-rig">
+    <div class="sec-header" onclick="toggleSec('sec-rig')">
+      <span class="sec-t">リグ装備</span>
+      <i class="ti ti-chevron-down sec-toggle open" id="sec-rig-icon"></i>
+    </div>
+    <div class="sec-body" id="sec-rig-body">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="rig-cat-tabs"></div>
+      <div class="sk-grid c1" id="rig-part-list" style="max-height:380px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px">選択中のパーツ</div>
+      <div id="rig-selected-list"></div>
+    </div>
+  </div>
+
   <div class="sec" id="sec-memo">
     <div class="sec-header" onclick="toggleSec('sec-memo')">
       <span class="sec-t">メモ</span>
@@ -471,6 +503,12 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
   <div class="vw-sec" id="vw-sec-ss">
     <div class="vw-sec-head">スタイルスキル</div>
     <div class="vw-sec-body" id="vw-ss-body"></div>
+  </div>
+
+  <!-- リグ装備 -->
+  <div class="vw-sec" id="vw-sec-rig">
+    <div class="vw-sec-head">リグ装備</div>
+    <div class="vw-sec-body" id="vw-rig-body"></div>
   </div>
 
   <!-- 因縁 -->
@@ -685,7 +723,7 @@ let chars={},cid=null;
 async function load(){try{const raw=localStorage.getItem(KEY);if(raw)chars=JSON.parse(raw);}catch(e){}try{const r=await window.storage?.get(KEY);if(r&&r.value)chars=JSON.parse(r.value);}catch(e2){}renderList();}
 async function store(){try{localStorage.setItem(KEY,JSON.stringify(chars));}catch(e){}try{await window.storage?.set(KEY,JSON.stringify(chars));}catch(e){}}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:'',records:[]};}
+function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:'',records:[],rigParts:[]};}
 
 function renderList(){
   const el=document.getElementById('clist');el.innerHTML='';
@@ -747,6 +785,7 @@ function fill(c){
   renderSS(c.ssId);
   renderKiz(c.kizuna);
   renderRecords(c.records||[]);
+  renderRigParts(c.rigParts||[]);
 }
 
 function renderHex(el,arr){
@@ -880,6 +919,71 @@ function addRecord(){
   renderRecords(chars[cid].records);
 }
 function delRecord(i){chars[cid].records.splice(i,1);renderRecords(chars[cid].records);}
+
+/* ===== リグ装備 ===== */
+let rigCurCat='銃砲';
+const RIG_CATS=['銃砲','刀剣','衝撃','防御','機動','照準','強化','構成'];
+
+function renderRigParts(selected){
+  // カテゴリタブ
+  const tabs=document.getElementById('rig-cat-tabs');
+  tabs.innerHTML='';
+  RIG_CATS.forEach(cat=>{
+    const btn=document.createElement('button');
+    btn.className='rig-cat-btn'+(cat===rigCurCat?' ac':'');
+    btn.textContent=cat;
+    btn.onclick=()=>{rigCurCat=cat;renderRigParts(chars[cid].rigParts||[]);};
+    tabs.appendChild(btn);
+  });
+
+  // パーツ一覧（現在のカテゴリに該当するもの）
+  const list=document.getElementById('rig-part-list');
+  list.innerHTML='';
+  const parts=RIG_PARTS_WEAPON.filter(p=>p.tags.includes(rigCurCat));
+  parts.forEach(p=>{
+    const isSelected=selected.some(s=>s.name===p.name);
+    const card=document.createElement('div');
+    card.className='rig-part-card'+(isSelected?' selected':'');
+    const diceStr=(p.dice===null)?'-':p.dice;
+    const diffStr=(p.difficulty===null)?'-':p.difficulty;
+    card.innerHTML=`<div class="rig-part-card-head">
+        <span class="name">${esc(p.name)}</span>
+        <span class="tag ac">判定${diceStr} / 難易度${diffStr}</span>
+      </div>
+      <div class="rig-part-card-stats">
+        <span class="tag">${esc(p.type)}</span>
+        <span class="tag">${p.range.join('・')}</span>
+        ${p.effects.slice(0,2).map(e=>`<span class="tag">${esc(e.split('：')[0].split('。')[0])}</span>`).join('')}
+      </div>
+      <div class="rig-part-card-flavor">${esc(p.flavor)}</div>`;
+    card.onclick=()=>toggleRigPart(p.name);
+    list.appendChild(card);
+  });
+
+  // 選択中リスト
+  const selList=document.getElementById('rig-selected-list');
+  selList.innerHTML='';
+  if(selected.length===0){
+    selList.innerHTML='<div style="font-size:12px;color:var(--color-text-tertiary)">未選択</div>';
+  }
+  selected.forEach(s=>{
+    const item=document.createElement('div');item.className='rig-selected-item';
+    item.innerHTML=`<span class="name">${esc(s.name)}</span><button class="del-btn" onclick="toggleRigPart('${s.name.replace(/'/g,"\\'")}');event.stopPropagation()"><i class="ti ti-x" aria-hidden="true"></i></button>`;
+    selList.appendChild(item);
+  });
+}
+
+function toggleRigPart(name){
+  if(!chars[cid].rigParts)chars[cid].rigParts=[];
+  const idx=chars[cid].rigParts.findIndex(s=>s.name===name);
+  if(idx>=0){
+    chars[cid].rigParts.splice(idx,1);
+  } else {
+    const part=RIG_PARTS_WEAPON.find(p=>p.name===name);
+    if(part)chars[cid].rigParts.push({name:part.name});
+  }
+  renderRigParts(chars[cid].rigParts);
+}
 function pickImg(){document.getElementById('img-in').click();}
 function onImg(e){
   const f=e.target.files[0];if(!f)return;
@@ -1072,6 +1176,30 @@ function fillView(c){
   } else {
     ssSec.style.display='none';
   }
+
+  // リグ装備
+  const rigSec=document.getElementById('vw-sec-rig');
+  const rigBody=document.getElementById('vw-rig-body');
+  rigBody.innerHTML='';
+  const rigList=(c.rigParts||[]).map(s=>RIG_PARTS_WEAPON.find(p=>p.name===s.name)).filter(Boolean);
+  rigSec.style.display=rigList.length?'':'none';
+  rigList.forEach(p=>{
+    const diceStr=(p.dice===null)?'-':p.dice;
+    const diffStr=(p.difficulty===null)?'-':p.difficulty;
+    const card=document.createElement('div');card.className='vw-rig-card';
+    card.innerHTML=`<div class="vw-rig-card-head">
+        <span class="name">${esc(p.name)}</span>
+        <span class="tag ac">判定${diceStr} / 難易度${diffStr}</span>
+      </div>
+      <div class="vw-rig-card-stats">
+        <span class="tag">${esc(p.tags.join('・'))}</span>
+        <span class="tag">${esc(p.type)}</span>
+        <span class="tag">${p.range.join('・')}</span>
+        <span class="tag">ジョイント:${p.joint.join('')}</span>
+      </div>
+      ${p.effects.length?`<div class="vw-rig-card-effects">${p.effects.map(esc).join('<br>')}</div>`:''}`;
+    rigBody.appendChild(card);
+  });
 
   // 因縁
   const kizSec=document.getElementById('vw-sec-kiz');
