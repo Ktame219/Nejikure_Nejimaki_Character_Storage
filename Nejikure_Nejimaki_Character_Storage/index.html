@@ -110,6 +110,29 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .kiz-t input[type=radio]{display:none}
 .kiz-t{display:flex;gap:3px}
 .kiz-t input+label{font-size:11px;cursor:pointer;padding:2px 6px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary)}
+
+/* レコード */
+.record-row{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:10px 12px;margin-bottom:10px;background:var(--color-background-secondary)}
+.record-row-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px}
+.record-row-head .fl{margin-bottom:0}
+.record-row-head input{flex:1}
+.record-del{flex-shrink:0}
+.vw-record-item{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px;overflow:hidden}
+.vw-record-head{padding:9px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:500;color:var(--color-text-primary);background:var(--color-background-secondary)}
+.vw-record-head:hover{background:var(--color-background-tertiary,var(--color-background-secondary))}
+.vw-record-head i{transition:transform .2s;font-size:13px;color:var(--color-text-tertiary);flex-shrink:0}
+.vw-record-head i.open{transform:rotate(180deg)}
+.vw-record-body{padding:0 12px;font-size:12px;color:var(--color-text-secondary);line-height:1.8;white-space:pre-wrap;display:none}
+.vw-record-body.open{display:block;padding:10px 12px}
+.record-sub-row{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.record-sub-row .fg{flex:1;min-width:90px}
+.record-negi-row{display:flex;align-items:center;gap:6px;margin:8px 0}
+.record-negi-row label{font-size:12px;color:var(--color-text-primary);cursor:pointer;display:flex;align-items:center;gap:6px}
+.record-kizuna-box{display:none;gap:8px;align-items:center;margin-top:6px;padding-top:8px;border-top:0.5px solid var(--color-border-tertiary)}
+.record-kizuna-box.show{display:flex;flex-wrap:wrap}
+.record-kizuna-box .fg{flex:1;min-width:100px}
+.vw-record-meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.vw-record-meta .tag{font-size:11px}
 .kiz-t input:checked+label{background:var(--ac);color:#fff;border-color:var(--ac)}
 .kiz-t input.teki:checked+label{background:#D85A30;border-color:#D85A30}
 .del-btn{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--color-text-tertiary);cursor:pointer;font-size:13px}
@@ -371,6 +394,18 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
       <textarea id="f-memo" rows="4"></textarea>
     </div>
   </div>
+
+  <div class="sec" id="sec-record">
+    <div class="sec-header" onclick="toggleSec('sec-record')">
+      <span class="sec-t">レコード</span>
+      <i class="ti ti-chevron-down sec-toggle open" id="sec-record-icon"></i>
+    </div>
+    <div class="sec-body" id="sec-record-body">
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:10px">閲覧画面ではタップしないと見られないようになります。</div>
+      <div id="record-rows"></div>
+      <button class="btn sm" onclick="addRecord()" style="margin-top:6px"><i class="ti ti-plus" aria-hidden="true"></i> 追加</button>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -453,6 +488,12 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
   <div class="vw-sec" id="vw-sec-memo">
     <div class="vw-sec-head">メモ</div>
     <div class="vw-sec-body"><div class="vw-memo" id="vw-memo"></div></div>
+  </div>
+
+  <!-- レコード -->
+  <div class="vw-sec" id="vw-sec-record">
+    <div class="vw-sec-head">レコード</div>
+    <div class="vw-sec-body" id="vw-record-body"></div>
   </div>
 </div><!-- /#vv -->
 </div><!-- /#app -->
@@ -644,7 +685,7 @@ let chars={},cid=null;
 async function load(){try{const raw=localStorage.getItem(KEY);if(raw)chars=JSON.parse(raw);}catch(e){}try{const r=await window.storage?.get(KEY);if(r&&r.value)chars=JSON.parse(r.value);}catch(e2){}renderList();}
 async function store(){try{localStorage.setItem(KEY,JSON.stringify(chars));}catch(e){}try{await window.storage?.set(KEY,JSON.stringify(chars));}catch(e){}}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:''};}
+function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:'',records:[]};}
 
 function renderList(){
   const el=document.getElementById('clist');el.innerHTML='';
@@ -705,6 +746,7 @@ function fill(c){
   if(c.clan)renderClanSkills(c.clan,c.rank);
   renderSS(c.ssId);
   renderKiz(c.kizuna);
+  renderRecords(c.records||[]);
 }
 
 function renderHex(el,arr){
@@ -786,6 +828,58 @@ function renderKiz(arr){
 }
 function addKiz(){chars[cid].kizuna.push({target:'',type:'絆',points:''});renderKiz(chars[cid].kizuna);}
 function delKiz(i){chars[cid].kizuna.splice(i,1);renderKiz(chars[cid].kizuna);}
+
+function renderRecords(arr){
+  const el=document.getElementById('record-rows');el.innerHTML='';
+  arr.forEach((r,i)=>{
+    const row=document.createElement('div');row.className='record-row';
+    const negiId='record-negi-'+i;
+    const kizBoxId='record-kizbox-'+i;
+    row.innerHTML=`<div class="record-row-head">
+        <span class="fl">名称</span>
+        <input type="text" value="${(r.title||'').replace(/"/g,'&quot;')}" onchange="chars[cid].records[${i}].title=this.value">
+        <button class="del-btn record-del" onclick="delRecord(${i})"><i class="ti ti-x" aria-hidden="true"></i></button>
+      </div>
+      <span class="fl">メモ</span>
+      <textarea rows="4">${esc(r.memo||'')}</textarea>
+      <div class="record-sub-row">
+        <div class="fg">
+          <span class="fl">獲得したクロガネ</span>
+          <input type="number" value="${r.kurogane||''}" onchange="chars[cid].records[${i}].kurogane=this.value">
+        </div>
+      </div>
+      <div class="record-negi-row">
+        <label>
+          <input type="checkbox" id="${negiId}" ${r.negi?'checked':''} onchange="toggleRecordNegi(${i})">
+          N.E.G.I.の起動
+        </label>
+      </div>
+      <div class="record-kizuna-box${r.negi?' show':''}" id="${kizBoxId}">
+        <div class="fg">
+          <span class="fl">獲得した絆 対象</span>
+          <input type="text" value="${(r.kizunaTarget||'').replace(/"/g,'&quot;')}" onchange="chars[cid].records[${i}].kizunaTarget=this.value">
+        </div>
+        <div class="fg" style="max-width:100px">
+          <span class="fl">点数</span>
+          <input type="number" value="${r.kizunaPoints||''}" onchange="chars[cid].records[${i}].kizunaPoints=this.value">
+        </div>
+      </div>`;
+    row.querySelector('textarea').onchange=function(){chars[cid].records[i].memo=this.value;};
+    el.appendChild(row);
+  });
+}
+function toggleRecordNegi(i){
+  const negi=document.getElementById('record-negi-'+i).checked;
+  chars[cid].records[i].negi=negi;
+  const box=document.getElementById('record-kizbox-'+i);
+  box.classList.toggle('show',negi);
+}
+function addRecord(){
+  if(!chars[cid].records)chars[cid].records=[];
+  chars[cid].records.push({title:'',memo:'',kurogane:'',negi:false,kizunaTarget:'',kizunaPoints:''});
+  renderRecords(chars[cid].records);
+}
+function delRecord(i){chars[cid].records.splice(i,1);renderRecords(chars[cid].records);}
 function pickImg(){document.getElementById('img-in').click();}
 function onImg(e){
   const f=e.target.files[0];if(!f)return;
@@ -999,6 +1093,38 @@ function fillView(c){
   const memoEl=document.getElementById('vw-memo');
   memoSec.style.display=c.memo?'':'none';
   memoEl.textContent=c.memo||'';
+
+  // レコード
+  const recordSec=document.getElementById('vw-sec-record');
+  const recordBody=document.getElementById('vw-record-body');
+  recordBody.innerHTML='';
+  const records=(c.records||[]).filter(r=>r.title||r.memo||r.kurogane||r.negi);
+  recordSec.style.display=records.length?'':'none';
+  records.forEach((r,i)=>{
+    const item=document.createElement('div');item.className='vw-record-item';
+    const bodyId='vw-record-body-'+i;
+    let meta='';
+    if(r.kurogane)meta+=`<span class="tag ac">獲得クロガネ ${esc(r.kurogane)}</span>`;
+    if(r.negi)meta+=`<span class="tag ac">N.E.G.I.起動</span>`;
+    if(r.negi&&(r.kizunaTarget||r.kizunaPoints))meta+=`<span class="tag">獲得した絆: ${esc(r.kizunaTarget||'')} ${r.kizunaPoints?r.kizunaPoints+'点':''}</span>`;
+    item.innerHTML=`<div class="vw-record-head" onclick="toggleRecord('${bodyId}')">
+        <span>${esc(r.title||'(無題)')}</span>
+        <i class="ti ti-chevron-down" id="${bodyId}-icon" aria-hidden="true"></i>
+      </div>
+      <div class="vw-record-body" id="${bodyId}">
+        ${meta?`<div class="vw-record-meta">${meta}</div>`:''}
+        ${esc(r.memo||'')}
+      </div>`;
+    recordBody.appendChild(item);
+  });
+}
+
+function toggleRecord(id){
+  const body=document.getElementById(id);
+  const icon=document.getElementById(id+'-icon');
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  if(icon)icon.classList.toggle('open',!isOpen);
 }
 
 function esc(s){
