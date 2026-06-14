@@ -1044,6 +1044,7 @@ function toggleRigPart(name){
 /* ===== リグ構築（グリッド配置） ===== */
 const RIG_GRID_W=8, RIG_GRID_H=4;
 const OPPOSITE={'上':'下','下':'上','左':'右','右':'左'};
+let rigDraggingName=null;
 
 function getRigPartData(name){
   if(name==='メインフレーム')return RIG_MAINFRAME;
@@ -1107,7 +1108,12 @@ function renderRigBuild(){
     item.draggable=true;
     item.textContent=s.name;
     item.dataset.name=s.name;
-    item.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',s.name);});
+    item.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',s.name);
+      rigDraggingName=s.name;
+      updateRigDragPreview();
+    });
+    item.addEventListener('dragend',()=>{rigDraggingName=null;clearRigDragPreview();});
     palette.appendChild(item);
   });
 
@@ -1116,6 +1122,7 @@ function renderRigBuild(){
   palette.addEventListener('drop',e=>{
     e.preventDefault();
     const name=e.dataTransfer.getData('text/plain');
+    rigDraggingName=null;
     if(!name||name==='メインフレーム')return;
     chars[cid].rigLayout.parts=(chars[cid].rigLayout.parts||[]).filter(p=>p.name!==name);
     renderRigBuild();
@@ -1145,16 +1152,18 @@ function renderRigBuild(){
             piece.appendChild(mark);
           });
         }
-        piece.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',placed.name);});
+        piece.addEventListener('dragstart',e=>{
+          e.dataTransfer.setData('text/plain',placed.name);
+          rigDraggingName=placed.name;
+          updateRigDragPreview();
+        });
+        piece.addEventListener('dragend',()=>{rigDraggingName=null;clearRigDragPreview();});
         cell.appendChild(piece);
       }
       // ドロップ処理
       cell.addEventListener('dragover',e=>{
         e.preventDefault();
-        const name=e.dataTransfer.types.includes('text/plain')?null:null; // dragover中はgetDataできないため簡易表示のみ
-        cell.classList.add('dragover');
       });
-      cell.addEventListener('dragleave',()=>{cell.classList.remove('dragover','invalid');});
       cell.addEventListener('drop',e=>{
         e.preventDefault();
         cell.classList.remove('dragover','invalid');
@@ -1180,6 +1189,27 @@ function renderRigBuild(){
       grid.appendChild(cell);
     }
   }
+}
+
+// ドラッグ中のパーツが置けるマスをハイライト
+function updateRigDragPreview(){
+  if(!rigDraggingName)return;
+  const curPlacements=getRigPlacements(chars[cid]);
+  const grid=document.getElementById('rig-grid');
+  const cells=grid.querySelectorAll('.rig-cell');
+  cells.forEach(cell=>{
+    const x=parseInt(cell.dataset.x), y=parseInt(cell.dataset.y);
+    const ok=canPlaceAt(rigDraggingName,x,y,curPlacements,rigDraggingName);
+    cell.classList.toggle('dragover',ok);
+    cell.classList.toggle('invalid',!ok);
+  });
+}
+function clearRigDragPreview(){
+  const grid=document.getElementById('rig-grid');
+  if(!grid)return;
+  grid.querySelectorAll('.rig-cell').forEach(cell=>{
+    cell.classList.remove('dragover','invalid');
+  });
 }
 function pickImg(){document.getElementById('img-in').click();}
 function onImg(e){
