@@ -152,6 +152,29 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
 .vw-rig-card-head .name{font-size:14px;font-weight:700;color:var(--color-text-primary)}
 .vw-rig-card-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .vw-rig-card-effects{font-size:12px;color:var(--color-text-secondary);line-height:1.7}
+
+/* リグ構築グリッド */
+.rig-build-wrap{overflow-x:auto;margin-bottom:10px;-webkit-overflow-scrolling:touch}
+.rig-grid{display:grid;grid-template-columns:repeat(8,44px);grid-template-rows:repeat(4,44px);gap:3px;width:max-content;margin:0 auto}
+.rig-cell{position:relative;border:0.5px dashed var(--color-border-tertiary);border-radius:6px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center}
+.rig-cell.dragover{border-color:var(--ac);background:var(--acl)}
+.rig-cell.invalid{border-color:var(--dng);background:#FDEAE5}
+.rig-piece{width:100%;height:100%;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;cursor:grab;text-align:center;line-height:1.2;padding:2px;position:relative;user-select:none}
+.rig-piece.mainframe{background:var(--ac)}
+.rig-piece.part{background:#5A6470}
+.rig-piece .joint-mark{position:absolute;width:6px;height:6px;border-radius:50%;background:#FFD400}
+.rig-piece .joint-up{top:1px;left:50%;transform:translateX(-50%)}
+.rig-piece .joint-down{bottom:1px;left:50%;transform:translateX(-50%)}
+.rig-piece .joint-left{left:1px;top:50%;transform:translateY(-50%)}
+.rig-piece .joint-right{right:1px;top:50%;transform:translateY(-50%)}
+.rig-palette{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.rig-palette-item{padding:8px 12px;border-radius:8px;background:#5A6470;color:#fff;font-size:12px;font-weight:500;cursor:grab;user-select:none;display:flex;align-items:center;gap:6px}
+.rig-palette-item.placed{opacity:.35;cursor:default}
+.rig-build-hint{font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px;line-height:1.6}
+.vw-rig-grid{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(4,1fr);gap:2px;aspect-ratio:8/4;margin-bottom:12px}
+.vw-rig-cell{border:0.5px solid var(--color-border-tertiary);border-radius:4px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--color-text-tertiary);text-align:center;padding:1px;line-height:1.1;font-weight:500;position:relative}
+.vw-rig-cell.filled.mainframe{background:var(--ac);color:#fff}
+.vw-rig-cell.filled.part{background:#5A6470;color:#fff}
 .kiz-t input:checked+label{background:var(--ac);color:#fff;border-color:var(--ac)}
 .kiz-t input.teki:checked+label{background:#D85A30;border-color:#D85A30}
 .del-btn{width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--color-text-tertiary);cursor:pointer;font-size:13px}
@@ -412,8 +435,22 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
     <div class="sec-body" id="sec-rig-body">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="rig-cat-tabs"></div>
       <div class="sk-grid c1" id="rig-part-list" style="max-height:380px;overflow-y:auto;margin-bottom:10px"></div>
-      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px">選択中のパーツ</div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px">選択中のパーツ（メインフレーム+最大3つ）</div>
       <div id="rig-selected-list"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="sec-rigbuild">
+    <div class="sec-header" onclick="toggleSec('sec-rigbuild')">
+      <span class="sec-t">リグ構築</span>
+      <i class="ti ti-chevron-down sec-toggle open" id="sec-rigbuild-icon"></i>
+    </div>
+    <div class="sec-body" id="sec-rigbuild-body">
+      <div class="rig-build-hint">パーツをドラッグしてグリッドに配置してください。黄色い点がジョイントです。隣接するマスのジョイント同士が一致しないと配置できません（メカニカルジョイントは例外）。</div>
+      <div class="rig-palette" id="rig-palette"></div>
+      <div class="rig-build-wrap">
+        <div class="rig-grid" id="rig-grid"></div>
+      </div>
     </div>
   </div>
 
@@ -510,6 +547,15 @@ input:focus,textarea:focus{outline:none;border-color:var(--ac)}
     <div class="vw-sec-head">リグ装備</div>
     <div class="vw-sec-body" id="vw-rig-body"></div>
   </div>
+
+  <!-- リグ構築 -->
+  <div class="vw-sec" id="vw-sec-rigbuild">
+    <div class="vw-sec-head">リグ構築</div>
+    <div class="vw-sec-body">
+      <div class="vw-rig-grid" id="vw-rig-grid"></div>
+    </div>
+  </div>
+
 
   <!-- 因縁 -->
   <div class="vw-sec" id="vw-sec-kiz">
@@ -723,7 +769,7 @@ let chars={},cid=null;
 async function load(){try{const raw=localStorage.getItem(KEY);if(raw)chars=JSON.parse(raw);}catch(e){}try{const r=await window.storage?.get(KEY);if(r&&r.value)chars=JSON.parse(r.value);}catch(e2){}renderList();}
 async function store(){try{localStorage.setItem(KEY,JSON.stringify(chars));}catch(e){}try{await window.storage?.set(KEY,JSON.stringify(chars));}catch(e){}}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:'',records:[],rigParts:[]};}
+function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:'',records:[],rigParts:[],rigLayout:{mainframe:{x:3,y:1},parts:[]}};}
 
 function renderList(){
   const el=document.getElementById('clist');el.innerHTML='';
@@ -786,6 +832,7 @@ function fill(c){
   renderKiz(c.kizuna);
   renderRecords(c.records||[]);
   renderRigParts(c.rigParts||[]);
+  renderRigBuild();
 }
 
 function renderHex(el,arr){
@@ -978,11 +1025,161 @@ function toggleRigPart(name){
   const idx=chars[cid].rigParts.findIndex(s=>s.name===name);
   if(idx>=0){
     chars[cid].rigParts.splice(idx,1);
+    // リグ構築からも削除
+    if(chars[cid].rigLayout&&chars[cid].rigLayout.parts){
+      chars[cid].rigLayout.parts=chars[cid].rigLayout.parts.filter(p=>p.name!==name);
+    }
   } else {
+    if(chars[cid].rigParts.length>=3){
+      toast('リグ装備はメインフレーム以外に最大3つまでです');
+      return;
+    }
     const part=RIG_PARTS_WEAPON.find(p=>p.name===name);
     if(part)chars[cid].rigParts.push({name:part.name});
   }
   renderRigParts(chars[cid].rigParts);
+  renderRigBuild();
+}
+
+/* ===== リグ構築（グリッド配置） ===== */
+const RIG_GRID_W=8, RIG_GRID_H=4;
+const OPPOSITE={'上':'下','下':'上','左':'右','右':'左'};
+
+function getRigPartData(name){
+  if(name==='メインフレーム')return RIG_MAINFRAME;
+  return RIG_PARTS_WEAPON.find(p=>p.name===name);
+}
+
+// 現在の配置一覧（メインフレーム含む）を取得
+function getRigPlacements(c){
+  const layout=c.rigLayout||{mainframe:{x:3,y:1},parts:[]};
+  const placements=[{name:'メインフレーム',x:layout.mainframe.x,y:layout.mainframe.y}];
+  (layout.parts||[]).forEach(p=>placements.push({name:p.name,x:p.x,y:p.y}));
+  return placements;
+}
+
+// 指定座標(x,y)に指定パーツを置けるかチェック（既存配置との整合性）
+function canPlaceAt(name,x,y,placements,excludeName){
+  if(x<0||x>=RIG_GRID_W||y<0||y>=RIG_GRID_H)return false;
+  const part=getRigPartData(name);
+  if(!part)return false;
+  // 既に他のパーツがそのマスにいるか
+  const occupied=placements.find(p=>p.x===x&&p.y===y&&p.name!==excludeName);
+  if(occupied)return false;
+
+  // 隣接マスとのジョイント整合性チェック
+  const dirs=[['上',0,-1],['下',0,1],['左',-1,0],['右',1,0]];
+  for(const[dir,dx,dy]of dirs){
+    const nx=x+dx, ny=y+dy;
+    if(nx<0||nx>=RIG_GRID_W||ny<0||ny>=RIG_GRID_H)continue;
+    const neighbor=placements.find(p=>p.x===nx&&p.y===ny&&p.name!==excludeName);
+    if(!neighbor)continue; // 隣に何もなければチェック不要
+    const neighborPart=getRigPartData(neighbor.name);
+    if(!neighborPart)continue;
+    // メカニカルジョイント絡みは無条件でOK
+    if(name==='メカニカルジョイント'||neighbor.name==='メカニカルジョイント')continue;
+    // このパーツのdir方向にジョイントがあるか／隣のパーツの反対方向にジョイントがあるか
+    const thisHas=part.joint.includes(dir);
+    const neighborHas=neighborPart.joint.includes(OPPOSITE[dir]);
+    if(thisHas!==neighborHas){
+      // 一方だけジョイントがある＝不一致
+      return false;
+    }
+  }
+  return true;
+}
+
+function renderRigBuild(){
+  const c=chars[cid];
+  if(!c.rigLayout)c.rigLayout={mainframe:{x:3,y:1},parts:[]};
+  const placements=getRigPlacements(c);
+
+  // パレット（未配置のパーツ）
+  const palette=document.getElementById('rig-palette');
+  palette.innerHTML='';
+  const unplaced=(c.rigParts||[]).filter(s=>!placements.some(p=>p.name===s.name));
+  if(unplaced.length===0){
+    palette.innerHTML='<div style="font-size:12px;color:var(--color-text-tertiary)">全てのパーツが配置済みです</div>';
+  }
+  unplaced.forEach(s=>{
+    const item=document.createElement('div');
+    item.className='rig-palette-item';
+    item.draggable=true;
+    item.textContent=s.name;
+    item.dataset.name=s.name;
+    item.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',s.name);});
+    palette.appendChild(item);
+  });
+
+  // パレットへドロップ＝配置解除（メインフレームは解除不可）
+  palette.addEventListener('dragover',e=>e.preventDefault());
+  palette.addEventListener('drop',e=>{
+    e.preventDefault();
+    const name=e.dataTransfer.getData('text/plain');
+    if(!name||name==='メインフレーム')return;
+    chars[cid].rigLayout.parts=(chars[cid].rigLayout.parts||[]).filter(p=>p.name!==name);
+    renderRigBuild();
+  });
+
+  // グリッド
+  const grid=document.getElementById('rig-grid');
+  grid.innerHTML='';
+  for(let y=0;y<RIG_GRID_H;y++){
+    for(let x=0;x<RIG_GRID_W;x++){
+      const cell=document.createElement('div');
+      cell.className='rig-cell';
+      cell.dataset.x=x;cell.dataset.y=y;
+      const placed=placements.find(p=>p.x===x&&p.y===y);
+      if(placed){
+        const part=getRigPartData(placed.name);
+        const piece=document.createElement('div');
+        piece.className='rig-piece '+(placed.name==='メインフレーム'?'mainframe':'part');
+        piece.draggable=true;
+        piece.textContent=placed.name;
+        piece.dataset.name=placed.name;
+        if(part){
+          part.joint.forEach(dir=>{
+            const mark=document.createElement('div');
+            const dirClass={'上':'joint-up','下':'joint-down','左':'joint-left','右':'joint-right'}[dir];
+            mark.className='joint-mark '+dirClass;
+            piece.appendChild(mark);
+          });
+        }
+        piece.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',placed.name);});
+        cell.appendChild(piece);
+      }
+      // ドロップ処理
+      cell.addEventListener('dragover',e=>{
+        e.preventDefault();
+        const name=e.dataTransfer.types.includes('text/plain')?null:null; // dragover中はgetDataできないため簡易表示のみ
+        cell.classList.add('dragover');
+      });
+      cell.addEventListener('dragleave',()=>{cell.classList.remove('dragover','invalid');});
+      cell.addEventListener('drop',e=>{
+        e.preventDefault();
+        cell.classList.remove('dragover','invalid');
+        const name=e.dataTransfer.getData('text/plain');
+        if(!name)return;
+        const tx=parseInt(cell.dataset.x), ty=parseInt(cell.dataset.y);
+        const curPlacements=getRigPlacements(chars[cid]);
+        if(!canPlaceAt(name,tx,ty,curPlacements,name)){
+          toast('ジョイントが一致しないため配置できません');
+          return;
+        }
+        // 配置を更新
+        if(name==='メインフレーム'){
+          chars[cid].rigLayout.mainframe={x:tx,y:ty};
+        } else {
+          if(!chars[cid].rigLayout.parts)chars[cid].rigLayout.parts=[];
+          const existing=chars[cid].rigLayout.parts.find(p=>p.name===name);
+          if(existing){existing.x=tx;existing.y=ty;}
+          else chars[cid].rigLayout.parts.push({name,x:tx,y:ty});
+        }
+        renderRigBuild();
+      });
+      grid.appendChild(cell);
+    }
+  }
 }
 function pickImg(){document.getElementById('img-in').click();}
 function onImg(e){
@@ -1200,6 +1397,25 @@ function fillView(c){
       ${p.effects.length?`<div class="vw-rig-card-effects">${p.effects.map(esc).join('<br>')}</div>`:''}`;
     rigBody.appendChild(card);
   });
+
+  // リグ構築（グリッド）
+  const buildSec=document.getElementById('vw-sec-rigbuild');
+  const buildGrid=document.getElementById('vw-rig-grid');
+  buildGrid.innerHTML='';
+  buildSec.style.display=rigList.length?'':'none';
+  const placements=getRigPlacements(c);
+  for(let y=0;y<RIG_GRID_H;y++){
+    for(let x=0;x<RIG_GRID_W;x++){
+      const cell=document.createElement('div');
+      cell.className='vw-rig-cell';
+      const placed=placements.find(p=>p.x===x&&p.y===y);
+      if(placed){
+        cell.classList.add('filled',placed.name==='メインフレーム'?'mainframe':'part');
+        cell.textContent=placed.name;
+      }
+      buildGrid.appendChild(cell);
+    }
+  }
 
   // 因縁
   const kizSec=document.getElementById('vw-sec-kiz');
