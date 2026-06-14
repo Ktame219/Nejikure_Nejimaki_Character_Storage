@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nejikurenejimakicharacterstorage",
+  "compatibility_date": "2026-06-14",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "Nejikure_Nejimaki_Character_Storage"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
