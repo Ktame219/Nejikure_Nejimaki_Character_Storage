@@ -182,7 +182,7 @@ function applyF(id,val,panelId){
 
 const KEY='nj_v7';
 let chars={},cid=null;
-async function load(){try{const raw=localStorage.getItem(KEY);if(raw)chars=JSON.parse(raw);}catch(e){}try{const r=await window.storage?.get(KEY);if(r&&r.value)chars=JSON.parse(r.value);}catch(e2){}renderList();}
+async function load(){try{const raw=localStorage.getItem(KEY);if(raw)chars=JSON.parse(raw);}catch(e){}try{const r=await window.storage?.get(KEY);if(r&&r.value)chars=JSON.parse(r.value);}catch(e2){}showScreen('lv');renderList();}
 async function store(){try{localStorage.setItem(KEY,JSON.stringify(chars));}catch(e){}try{await window.storage?.set(KEY,JSON.stringify(chars));}catch(e){}}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function ec(){return{name:'',rig:'',player:'',gender:'',age:'',line:'',minou:'',minouDesc:'',kikkake:'',kikkakeDesc:'',negai:'',negaiDesc:'',clan:'',rank:'',order:'',kurogane:new Array(10).fill(false),ko:false,ssId:'',kizuna:[{target:'',type:'絆',points:''}],memo:'',img:'',records:[],rigParts:[],rigLayout:{mainframe:{x:3,y:1},parts:[]}};}
@@ -214,11 +214,20 @@ function renderList(){
   nc.onclick=newChar;el.appendChild(nc);
 }
 
+// 画面切り替えを一元管理（lv:一覧, sv:編集, vv:閲覧）
+function showScreen(name){
+  const lv=document.getElementById('lv');
+  const sv=document.getElementById('sv');
+  const vv=document.getElementById('vv');
+  lv.style.display=(name==='lv')?'':'none';
+  sv.classList.toggle('on',name==='sv');
+  vv.classList.toggle('on',name==='vv');
+}
+
 function newChar(){const id=uid();chars[id]=ec();open_(id);}
 function open_(id){
   cid=id;const c=chars[id];
-  document.getElementById('lv').style.display='none';
-  document.getElementById('sv').classList.add('on');
+  showScreen('sv');
   document.getElementById('stitle').textContent=c.name||'キャラクター';
   ['d66-name','d66-rig','d66-bg'].forEach(i=>document.getElementById(i).className='d66-panel');
   d66ActivePanel=null;d66ActiveBgKey=null;
@@ -226,7 +235,7 @@ function open_(id){
   rigPicked=[];
   fill(c);
 }
-function back(){document.getElementById('lv').style.display='';document.getElementById('sv').classList.remove('on');cid=null;}
+function back(){showScreen('lv');cid=null;}
 
 function fill(c){
   const fv=(id,v)=>{document.getElementById(id).value=v||'';};
@@ -656,9 +665,8 @@ async function savec(){
     btn.innerHTML=o;
     // 保存後に閲覧モードへ遷移
     const id=cid;
-    document.getElementById('sv').classList.remove('on');
+    showScreen('vv');
     cid=id;
-    document.getElementById('vv').classList.add('on');
     document.getElementById('vtitle').textContent=chars[id].name||'キャラクター';
     fillView(chars[id]);
   },900);
@@ -673,20 +681,17 @@ load();
 function openView(id){
   cid=id;
   const c=chars[id];
-  document.getElementById('lv').style.display='none';
-  document.getElementById('vv').classList.add('on');
+  showScreen('vv');
   document.getElementById('vtitle').textContent=c.name||'キャラクター';
   fillView(c);
 }
 
 function backFromView(){
-  document.getElementById('lv').style.display='';
-  document.getElementById('vv').classList.remove('on');
+  showScreen('lv');
   cid=null;
 }
 
 function openEdit(){
-  document.getElementById('vv').classList.remove('on');
   open_(cid);
 }
 
